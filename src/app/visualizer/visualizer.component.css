@@ -1,0 +1,41 @@
+.grid {
+    width: 80%;
+    margin: 0 auto;
+    overflow: hidden;
+    border-left: solid rgb(183, 232, 238) 1px;
+    border-top: solid rgb(183, 232, 238) 1px;
+}
+
+.node {
+    width: 19px;
+    height: 19px;
+    border-right: solid rgb(183, 232, 238) 1px;
+    border-bottom: solid rgb(183, 232, 238) 1px;
+    padding:0;
+    margin:0;
+    float: left;
+}
+
+.node:hover {
+    background-color: rgb(184, 185, 185);
+}
+
+.start {
+    background-color: green;
+}
+
+.finish {
+    background-color: red;
+}
+
+.shortest-path {
+    background-color: aqua;
+}
+
+.start:hover {
+    background-color: green;
+}
+
+.finish:hover {
+    background-color: red;
+}
