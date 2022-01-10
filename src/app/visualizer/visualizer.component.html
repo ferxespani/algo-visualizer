@@ -1,9 +1,30 @@
-<button (click)="onClick()">Start A* algorithm</button>
+<div id="buttons">
+    <button (click)="onClick()" 
+            class="button"
+            mat-raised-button color="primary"
+            [disabled]="this.startButtonDisabled">
+        Start A* search
+    </button>
+    <button (click)="onReset()"
+             class="button"
+             mat-raised-button
+             [disabled]="this.resetButtonDisabled">
+        Reset   
+    </button>
+    <button (click)="onBuildWall()"
+            mat-raised-button
+            id="wall-btn">
+        Build wall
+    </button>
+</div>
 
 <div class="grid">
     <div class="row" *ngFor="let row of nodes">
-        <div class="node" 
+        <div class="node"
+            matTooltip="row:column ({{node.name}}) id ({{node.id}})"
+            [attr.data-id]="node.id"
             draggable="true"
+            (click)="onMakeNodeAWall($event)"
             (drag)="onDrag($event)"
             (dragstart)="onDragStart($event)"
             (dragend)="onDragEnd($event)"
@@ -11,7 +32,8 @@
             (dragleave)="onDragLeave($event)"
             (dragover)="onDragOver($event)"
             (drop)="onDrop($event)"
-            [ngClass]="{'start': node.isStart, 'finish': node.isFinish, 'shortest-path': node.isInShortestPath}" 
+            [ngClass]="{'start': node.isStart, 'finish': node.isFinish, 'shortest-path': node.isInShortestPath, 'visited': node.isVisited, 
+                        'can-be-wall': this.buildWallModeEnabled && node.canBeWall, 'wall': node.isWall}"
             *ngFor="let node of row">
         </div>
     </div>

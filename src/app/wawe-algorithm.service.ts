@@ -1,12 +1,12 @@
 import { Injectable } from '@angular/core';
-import { Info } from './info.model';
 
 import { Node } from './node.model';
 
 @Injectable({
   providedIn: 'root'
 })
-export class WaweAlgorithmService {
+export class WaweAlgorithmService 
+{
 
   private nodes: Node[][] = [];
   private startNode: Node = new Node(0, 0, false, false);
@@ -14,55 +14,85 @@ export class WaweAlgorithmService {
   private openNodes: Node[] = [];
   private closeNodes: Node[] = [];
   public shortestPath: Node[] = [];
+  public visitedNodes: Node[] = [];
 
   constructor() {}
 
-  initializeGrid(nodes: Node[][]): void {
+  initializeGrid(nodes: Node[][]): void 
+  {
     this.nodes = nodes;
 
     this.searchStartNode();
     this.searchEndNode();
   }
 
-  searchStartNode(): void {
-    for (let i = 0; i < this.nodes.length; i++) {
+  resetGrid(): void 
+  {
+    this.nodes = [];
+    this.openNodes = [];
+    this.closeNodes = [];
+    this.shortestPath = [];
+    this.visitedNodes = [];
+    this.startNode = new Node(0, 0, false, false);
+    this.endNode = new Node(0, 0, false, false);
+  }
+
+  searchStartNode(): void 
+  {
+    for (let i = 0; i < this.nodes.length; i++) 
+    {
       let row = this.nodes[i];
 
-      for (let j = 0; j < row.length; j++) {
-        if (this.nodes[i][j].isStart) {
+      for (let j = 0; j < row.length; j++) 
+      {
+        if (this.nodes[i][j].isStart) 
+        {
           this.startNode = this.nodes[i][j];
         }
       }
     }
   }
 
-  searchEndNode(): void {
-    for (let i = 0; i < this.nodes.length; i++) {
+  searchEndNode(): void 
+  {
+    for (let i = 0; i < this.nodes.length; i++) 
+    {
       let row = this.nodes[i];
 
-      for (let j = 0; j < row.length; j++) {
-        if (this.nodes[i][j].isFinish) {
+      for (let j = 0; j < row.length; j++) 
+      {
+        if (this.nodes[i][j].isFinish) 
+        {
           this.endNode = this.nodes[i][j];
-          console.log(this.endNode)
         }
       }
     }
   }
 
-  start(): void {
+  start(): void 
+  {
     this.openNodes.push(this.startNode)
 
-    while (this.openNodes.length !== 0) {
+    while (this.openNodes.length !== 0) 
+    {
       let currentNode = this.findNodeWithLowestSum();
 
-      if (currentNode.row === this.endNode.row && currentNode.column === this.endNode.column) {
+      if (currentNode.row === this.endNode.row && currentNode.column === this.endNode.column) 
+      {
         console.log("DONE!!!");
 
         let temp = currentNode;
-        this.shortestPath.push(currentNode);
-        while (temp.info?.fromNode) {
-          this.shortestPath.push(temp.info.fromNode);
-          temp = temp.info.fromNode;
+        this.shortestPath.unshift(currentNode);
+        while (temp.fromNode) 
+        {
+          this.shortestPath.unshift(temp.fromNode);
+          Array.prototype.unshift.apply(this.visitedNodes, temp.neighbors);
+          temp = temp.fromNode;
+
+          if (!temp.fromNode) 
+          {
+            Array.prototype.unshift.apply(this.visitedNodes, temp.neighbors);
+          }
         }
 
         return;
@@ -73,90 +103,135 @@ export class WaweAlgorithmService {
 
       this.findNeighbors(currentNode);
 
-      const length = currentNode.info?.neighbors.length ?? 0;
-      for (let i = 0; i < length; i++) {
-        let neighbor = currentNode.info?.neighbors[i] ?? new Node(0, 0, false, false);
+      const neighborsNumber = currentNode.neighbors.length;
+      for (let i = 0; i < neighborsNumber; i++) 
+      {
+        let neighbor = currentNode.neighbors[i];
 
-        if (!this.closeNodes.includes(neighbor)) {
-          let tempG = currentNode.info?.distance ?? 0;
-          if (currentNode.row !== neighbor.row && currentNode.column !== neighbor.column) {
+        if (!this.closeNodes.includes(neighbor)) 
+        {
+          let tempG = currentNode.distanceFromStart;
+          if (currentNode.row !== neighbor.row && currentNode.column !== neighbor.column) 
+          {
             tempG += Math.sqrt(800);
           }
-          else {
+          else 
+          {
             tempG += 20;
           }
 
-          if (this.openNodes.includes(neighbor)) {
-            let neighborG = neighbor.info?.distance ?? 0;
-            // if (tempG < neighborG) {
-            //   if (neighbor.info) {
-            //     neighbor.info.distance = tempG;
-            //   }
-            // }
+          var newPath = false;
+          if (this.openNodes.includes(neighbor)) 
+          {
+            let neighborG = neighbor.distanceFromStart;
+            if (tempG < neighborG) 
+            {
+              newPath = true;
+              neighbor.distanceFromStart = tempG;
+            }
           }
-          else {
+          else 
+          {
+            newPath = true;
             this.openNodes.push(neighbor);
-            neighbor.info = new Info(tempG, 0, 0);
+            neighbor.distanceFromStart = tempG;
           }
 
-          if (neighbor.info) {
-            neighbor.info.distanceToFinish = this.heuristic(neighbor, this.endNode);
-            neighbor.info.sumDistance = neighbor.info.distance + neighbor.info.distanceToFinish;
-            neighbor.info.fromNode = currentNode;
-            console.log(neighbor.info.distance)
-            console.log(neighbor.info.distanceToFinish)
-            console.log(neighbor.info.sumDistance)
+          if (newPath) 
+          {
+            neighbor.distanceToFinish = this.heuristic(neighbor, this.endNode);
+            neighbor.totalDistance = neighbor.distanceFromStart + neighbor.distanceToFinish;
+            neighbor.fromNode = currentNode;
           }
         }
       }
     }
   }
-  heuristic(neighbor: Node, endNode: Node): number {
-    return Math.sqrt(Math.pow((this.endNode.row - neighbor.row), 2) + Math.pow((this.endNode.column - neighbor.column), 2)) * 10;
+
+  heuristic(neighbor: Node, endNode: Node): number 
+  {
+    return Math.max(Math.abs(endNode.row - neighbor.row), Math.abs(endNode.column - neighbor.column));
   }
 
-  findNeighbors(node: Node): void {
+  findNeighbors(node: Node): void 
+  {
     let x = node.row;
     let y = node.column;
 
-    if (!node.info) {
-      node.info = new Info(0, 0, 0);
+    if (x > 0 && y > 0) 
+    {
+      let neighborNode = this.nodes[x - 1][y - 1];
+
+      if (!neighborNode.isWall)
+        node.neighbors.push(neighborNode);
     }
 
-    if (node.info) {
-      if (x > 0 && y > 0) {
-        node.info.neighbors.push(this.nodes[x - 1][y - 1]);
-      }
-      if (x < this.nodes.length - 1 && y < this.nodes[0].length - 1) {
-        node.info.neighbors.push(this.nodes[x + 1][y + 1]);
-      }
-      if (x < this.nodes.length - 1 && y > 0) {
-        node.info.neighbors.push(this.nodes[x + 1][y - 1]);
-      }
-      if (x > 0 && y < this.nodes[0].length - 1) {
-        node.info.neighbors.push(this.nodes[x - 1][y + 1]);
-      }
-      if (x < this.nodes.length - 1) {
-        node.info.neighbors.push(this.nodes[x + 1][y]);
-      }
-      if (y < this.nodes[0].length - 1) {
-        node.info.neighbors.push(this.nodes[x][y + 1]);
-      }
-      if (y > 0) {
-        node.info.neighbors.push(this.nodes[x][y - 1]);
-      }
-      if (x > 0) {
-        node.info.neighbors.push(this.nodes[x - 1][y]);
-      }
+    if (x < this.nodes.length - 1 && y < this.nodes[0].length - 1) 
+    {
+      let neighborNode = this.nodes[x + 1][y + 1];
+
+      if (!neighborNode.isWall)
+        node.neighbors.push(neighborNode);
+    }
+
+    if (x < this.nodes.length - 1 && y > 0) 
+    {
+      let neighborNode = this.nodes[x + 1][y - 1];
+
+      if (!neighborNode.isWall)
+        node.neighbors.push(neighborNode);
+    }
+
+    if (x > 0 && y < this.nodes[0].length - 1) 
+    {
+      let neighborNode = this.nodes[x - 1][y + 1];
+
+      if (!neighborNode.isWall)
+        node.neighbors.push(neighborNode);
+    }
+
+    if (x < this.nodes.length - 1) 
+    {
+      let neighborNode = this.nodes[x + 1][y];
+
+      if (!neighborNode.isWall)
+        node.neighbors.push(neighborNode);
+    }
+
+    if (y < this.nodes[0].length - 1) 
+    {
+      let neighborNode = this.nodes[x][y + 1];
+
+      if (!neighborNode.isWall)
+        node.neighbors.push(neighborNode);
+    }
+
+    if (y > 0) 
+    {
+      let neighborNode = this.nodes[x][y - 1];
+
+      if (!neighborNode.isWall)
+        node.neighbors.push(neighborNode);
+    }
+
+    if (x > 0) 
+    {
+      let neighborNode = this.nodes[x - 1][y];
+
+      if (!neighborNode.isWall)
+        node.neighbors.push(neighborNode);
     }
   }
 
-  findNodeWithLowestSum() {
-    let lowestSum = this.openNodes[0].info?.sumDistance ?? 0;
+  findNodeWithLowestSum(): Node 
+  {
+    let lowestSum = this.openNodes[0].totalDistance;
     let nodeIndex = 0;
-    for (let i = 1; i < this.openNodes.length; i++) {
-      const currentSum = this.openNodes[i].info?.sumDistance ?? 0;
-      if (currentSum < lowestSum) {
+    for (let i = 0; i < this.openNodes.length; i++) 
+    {
+      const currentSum = this.openNodes[i].totalDistance;
+      if (currentSum < lowestSum) 
+      {
         lowestSum = currentSum;
         nodeIndex = i;
       }
@@ -165,9 +240,12 @@ export class WaweAlgorithmService {
     return this.openNodes[nodeIndex];
   }
 
-  removeFromArray(array: Node[], element: Node) {
-    for (let i = 0; i < array.length; i++) {
-      if (array[i] === element) {
+  removeFromArray(array: Node[], element: Node): void
+  {
+    for (let i = 0; i < array.length; i++) 
+    {
+      if (array[i] === element) 
+      {
         array.splice(i, 1);
       }
     }

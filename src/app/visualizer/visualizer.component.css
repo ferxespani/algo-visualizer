@@ -28,8 +28,16 @@
     background-color: red;
 }
 
+.wall {
+    background-color: black;
+}
+
 .shortest-path {
-    background-color: aqua;
+    animation: 1s ease-in-out 0s both change-color-shortest-path;
+}
+
+.visited {
+    animation: 1s ease-in-out 0s both change-color-visited;
 }
 
 .start:hover {
@@ -38,4 +46,36 @@
 
 .finish:hover {
     background-color: red;
+}
+
+.can-be-wall:hover {
+    background-color: black;
+}
+
+#buttons {
+    display: flex;
+    justify-content: center;
+    width: 500px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.button {
+    margin-right: 10px;
+    margin-left: 10px;
+}
+
+#wall-btn {
+    background-color: black;
+    color: white;
+}
+
+@keyframes change-color-visited {
+    from { background-color: white; }
+    to { background-color: yellow; } 
+}
+
+@keyframes change-color-shortest-path {
+    from { background-color: white; }
+    to { background-color: aqua; } 
 }
